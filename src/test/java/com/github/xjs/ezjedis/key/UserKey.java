@@ -17,4 +17,5 @@ public class UserKey extends AbstractKey{
 	public static UserKey getByUserId = new UserKey("uid", 0);
 	public static UserKey getByUserIdExpire = new UserKey("uide", 60);
 	public static UserKey getByUserIds = new UserKey("uids", 60);
+	public static UserKey lock = new UserKey("lock", 10);
 }

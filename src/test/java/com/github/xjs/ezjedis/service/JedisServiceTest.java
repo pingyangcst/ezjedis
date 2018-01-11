@@ -98,4 +98,14 @@ public class JedisServiceTest {
 		ret = jedisSevice.lock(UserKey.getByUserId, "1000",1);
 		Assert.assertFalse(ret);
 	}
+	@Test
+	public void testLock2() {
+		boolean ret = jedisSevice.lock(UserKey.lock, "1",15);
+		Assert.assertTrue(ret);
+		long start = System.currentTimeMillis();
+		ret = jedisSevice.lock(UserKey.lock, "1",15);
+		long end = System.currentTimeMillis();
+		System.out.println("use time:"+(end-start));
+		Assert.assertTrue(ret);
+	}
 }
