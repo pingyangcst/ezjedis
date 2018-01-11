@@ -21,7 +21,7 @@
 
 ### 读写Key
 
-####读取key
+### 读取key
 
 ```java
 public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
@@ -32,7 +32,7 @@ public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class
   return jedisClient.getList(prefix, key, clazz);
 }
 ```
-#### 写入key
+### 写入key
 
 ```java
 public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
@@ -40,7 +40,7 @@ public <T> boolean set(final KeyPrefix prefix, final String key, final T req, fi
 }
 ```
 
-####删除Key
+### 删除Key
 ```java
 public boolean delete(final KeyPrefix prefix) {
   return jedisClient.delete(prefix);
@@ -74,7 +74,7 @@ public boolean deleteAll() {
 }
 ```
 
-#### 分布式锁
+### 分布式锁
 ```java
 public boolean lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
   return jedisClient.lock(prefix, key, waitSeconds);
