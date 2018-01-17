@@ -49,6 +49,9 @@ public class JedisConfig {
 	@Value("${redis.replication}")
 	private boolean replication;
 	
+	@Value("${redis.masterName}")
+	private String masterName;
+	
 	@Bean
 	public JedisClient JedisClientFactory() {
 		String hostPorts[] = hosts.split(",");
@@ -62,7 +65,7 @@ public class JedisConfig {
 			for(String hostPort : hostPorts) {
 				sentinels.add(hostPort); // 此处放置ip及端口为 sentinel,如果有多个sentinel 则逐一add即可
 			}
-			JedisSentinelPool jedisPool = new JedisSentinelPool("master7000", sentinels, jedisPoolConfig, timeout, password);
+			JedisSentinelPool jedisPool = new JedisSentinelPool(masterName, sentinels, jedisPoolConfig, timeout, password, 0);
 			return new JedisClient(null, jedisPool, null);
 		}else {
 			if(hostPorts.length <= 1) {//standalone
@@ -140,5 +143,13 @@ public class JedisConfig {
 
 	public void setReplication(boolean replication) {
 		this.replication = replication;
+	}
+
+	public String getMasterName() {
+		return masterName;
+	}
+
+	public void setMasterName(String masterName) {
+		this.masterName = masterName;
 	}
 }
