@@ -4,6 +4,7 @@
 package com.github.xjs.ezjedis.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
@@ -299,13 +300,28 @@ public class JedisClient {
 		if(prefix == null || key == null || oldValue == null) {
 			return false;
 		}
-		String nowValue = get(prefix,key, String.class );
-		if(oldValue.equals(nowValue)) {//只能释放自己加的锁
-			return delete(prefix, key);
-		}else {//说明锁已经被别人拿到了，在超时时间内没处理完，所以锁得超时时间要稍微长一点
-			//TODO 
+		//调用lua脚本
+		 String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+		 String realKey = prefix.getPrefix() + key;
+		 JedisCommands jc = null;
+		 Object result = null;
+		try {
+			jc = getJedisCommands();
+			if(jc instanceof Jedis) {//jedis
+				result = ((Jedis)jc).eval(script, Collections.singletonList(realKey), Collections.singletonList(oldValue));
+			}else {//集群
+				result = ((JedisCluster)jc).eval(script, Collections.singletonList(realKey), Collections.singletonList(oldValue));
+			}
+			if(result!=null && result.toString().equals("1")) {
+				return true;
+			}
+			return false;
+		} catch (final Exception e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			closeJedisCommands(jc);
 		}
-		return false;
 	}
 	
 	public List<String> scanKeys(KeyPrefix keyPrefix) {
