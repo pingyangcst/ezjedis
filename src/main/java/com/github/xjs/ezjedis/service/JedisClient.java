@@ -276,14 +276,14 @@ public class JedisClient {
 		}
 	}
 	
-	public boolean lock(KeyPrefix keyPrefix, String key, int waitSeconds) {
+	public String lock(KeyPrefix keyPrefix, String key, int waitSeconds) {
         int waitTimeout = waitSeconds * 1000;
         while (waitTimeout >= 0) {
             long expiresAt = System.currentTimeMillis() + keyPrefix.getExpireSeconds()*1000 + 1;
             String expiresAtStr = String.valueOf(expiresAt); //锁到期时间
             if (this.set(keyPrefix, key, expiresAtStr, true)) {//设置超时时间，防止客户端崩溃，锁得不到释放
                 // lock acquired
-                return true;
+                return expiresAtStr;
             }
             waitTimeout -= 100;
             try {
@@ -292,8 +292,21 @@ public class JedisClient {
             	e.printStackTrace();
             }
         }
-        return false;
+        return null;
     }
+	
+	public boolean unLock(KeyPrefix prefix, String key, String oldValue) {
+		if(prefix == null || key == null || oldValue == null) {
+			return false;
+		}
+		String nowValue = get(prefix,key, String.class );
+		if(oldValue.equals(nowValue)) {//只能释放自己加的锁
+			return delete(prefix, key);
+		}else {//说明锁已经被别人拿到了，在超时时间内没处理完，所以锁得超时时间要稍微长一点
+			//TODO 
+		}
+		return false;
+	}
 	
 	public List<String> scanKeys(KeyPrefix keyPrefix) {
 		if(keyPrefix == null) {
@@ -382,5 +395,5 @@ public class JedisClient {
 	private <T> List<T> stringToBeanList(String src, Class<T> clazz){
 		return JSON.parseArray(src, clazz);
 	}
-	
+
 }

@@ -85,7 +85,11 @@ public class JedisService {
 		return jedisClient.scanKeys(key);
 	}
 	
-	public boolean lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
+	public String lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
 		return jedisClient.lock(prefix, key, waitSeconds);
+	}
+	
+	public boolean unLock(final KeyPrefix prefix,final String key, final String oldValue) {
+		return jedisClient.unLock(prefix, key, oldValue);
 	}
 }

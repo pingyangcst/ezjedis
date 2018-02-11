@@ -93,19 +93,61 @@ public class JedisServiceTest {
 	
 	@Test
 	public void testLock() {
-		boolean ret = jedisSevice.lock(UserKey.getByUserId, "1000",1);
-		Assert.assertTrue(ret);
-		ret = jedisSevice.lock(UserKey.getByUserId, "1000",1);
-		Assert.assertFalse(ret);
+		String oldVaue = jedisSevice.lock(UserKey.getByUserId, "1000",1);
+		Assert.assertTrue(oldVaue != null);
+		oldVaue = jedisSevice.lock(UserKey.getByUserId, "1000",1);
+		Assert.assertTrue(oldVaue == null);
 	}
 	@Test
 	public void testLock2() {
-		boolean ret = jedisSevice.lock(UserKey.lock, "1",15);
-		Assert.assertTrue(ret);
+		String oldValue = jedisSevice.lock(UserKey.lock, "1",15);
+		Assert.assertTrue(oldValue != null);
 		long start = System.currentTimeMillis();
-		ret = jedisSevice.lock(UserKey.lock, "1",15);
+		oldValue = jedisSevice.lock(UserKey.lock, "1",15);
 		long end = System.currentTimeMillis();
 		System.out.println("use time:"+(end-start));
-		Assert.assertTrue(ret);
+		Assert.assertTrue(oldValue != null);
+	}
+	@Test
+	public void testLock3() {
+		String oldValue = jedisSevice.lock(UserKey.lock, "2",15);
+		Assert.assertTrue(oldValue != null);
+		jedisSevice.unLock(UserKey.lock, "2", oldValue);
+		long start = System.currentTimeMillis();
+		oldValue = jedisSevice.lock(UserKey.lock, "1",15);
+		long end = System.currentTimeMillis();
+		System.out.println("use time:"+(end-start));
+		Assert.assertTrue(oldValue != null);
+	}
+	
+	@Test
+	public void testLock4() {
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				String oldValue = jedisSevice.lock(UserKey.lock, "3",15);
+				try {
+					Thread.sleep(15);
+				}catch(Exception e) {
+					boolean ret = jedisSevice.unLock(UserKey.lock, "3", oldValue);
+					Assert.assertFalse(ret);
+				}
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				String oldValue = jedisSevice.lock(UserKey.lock, "3",15);
+				try {
+					Thread.sleep(3000);
+				}catch(Exception e) {
+					boolean ret =	jedisSevice.unLock(UserKey.lock, "3", oldValue);
+					Assert.assertTrue(ret);
+				}
+			}
+		});
+		t1.start();
+		try {
+			Thread.sleep(10);
+		}catch(Exception e) {}
+		t2.start();
 	}
 }
