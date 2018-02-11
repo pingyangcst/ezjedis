@@ -76,7 +76,10 @@ public boolean deleteAll() {
 
 ### 分布式锁
 ```java
-public boolean lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
+public String lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
   return jedisClient.lock(prefix, key, waitSeconds);
+}
+public boolean unLock(final KeyPrefix prefix,final String key, final String oldValue) {
+  return jedisClient.unLock(prefix, key, oldValue);
 }
 ```
