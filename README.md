@@ -21,7 +21,7 @@
 
 ### 读写Key
 
-### 读取key
+### 读取key ###
 
 ```java
 public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
@@ -32,7 +32,7 @@ public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class
   return jedisClient.getList(prefix, key, clazz);
 }
 ```
-### 写入key
+### 写入key ###
 
 ```java
 public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
@@ -40,7 +40,7 @@ public <T> boolean set(final KeyPrefix prefix, final String key, final T req, fi
 }
 ```
 
-### 删除Key
+### 删除Key ###
 ```java
 public boolean delete(final KeyPrefix prefix) {
   return jedisClient.delete(prefix);
@@ -74,7 +74,7 @@ public boolean deleteAll() {
 }
 ```
 
-### 分布式锁
+### 分布式锁 ###
 ```java
 public String lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
   return jedisClient.lock(prefix, key, waitSeconds);
@@ -83,3 +83,12 @@ public boolean unLock(final KeyPrefix prefix,final String key, final String oldV
   return jedisClient.unLock(prefix, key, oldValue);
 }
 ```
+
+--------------------
+
+### 连接释放管理 ###
+	1、可以在Controller执行期间使用同一个连接
+	2、可以在自己的项目中添加EzjedisInterceptor这个拦截器，用于在Controller方法执行末尾释放redis连接。
+	3、可以在Controller的任意地方手动结束掉连接，只需要调用JedisService.releaseConnection()即可。
+	4、可以调用带有releaseNow参数的方法，方法结束后会关闭掉连接
+----------------
