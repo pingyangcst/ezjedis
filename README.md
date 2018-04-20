@@ -25,18 +25,38 @@
 
 ```java
 public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-  return jedisClient.get(prefix, key, clazz);
+	return this.get(prefix, key, clazz, false);
 }
-	
+
+public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+	return jedisClient.get(prefix, key, clazz, releaseNow);
+}
+
 public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-  return jedisClient.getList(prefix, key, clazz);
+	return this.getList(prefix, key, clazz, false);
+}
+
+public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+	return jedisClient.getList(prefix, key, clazz, releaseNow);
 }
 ```
 ### 写入key ###
 
 ```java
+public <T> boolean set(final KeyPrefix prefix, final String key, final T req) {
+	return this.set(prefix, key, req, false, false);
+}
+
+public <T> boolean set(final boolean releaseNow, final KeyPrefix prefix, final String key, final T req) {
+	return this.set(prefix, key, req, false, releaseNow);
+}
+
 public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
-  return jedisClient.set(prefix, key, req, onlyNotExist);
+	return this.set(prefix, key, req, onlyNotExist, false);
+}
+
+public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist, final boolean releaseNow) {
+	return jedisClient.set(prefix, key, req, onlyNotExist, releaseNow);
 }
 ```
 
