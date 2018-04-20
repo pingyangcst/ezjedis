@@ -28,56 +28,28 @@ import redis.clients.jedis.ScanResult;
  */
 public class JedisClient {
 	
-	private JedisPool jp;
-	
-	private JedisSentinelPool js;
-	
-	private JedisCluster jc;
-
-	public JedisClient() {}
+	JedisCommandsPool jcp;
 	
 	public JedisClient(JedisPool jp,JedisSentinelPool js, JedisCluster jc) {
-		this.jp = jp;
-		this.js = js;
-		this.jc = jc;
-	}
-
-	public JedisPool getJp() {
-		return jp;
-	}
-
-	public void setJp(JedisPool jp) {
-		this.jp = jp;
-	}
-
-	public JedisCluster getJc() {
-		return jc;
-	}
-
-	public void setJc(JedisCluster jc) {
-		this.jc = jc;
+		this.jcp = new JedisCommandsPool(jp, js, jc);
 	}
 	
-	public JedisSentinelPool getJs() {
-		return js;
+	public void releaseConnection() {
+		jcp.releaseJedisCommands();
 	}
-
-	public void setJs(JedisSentinelPool js) {
-		this.js = js;
-	}
-
-	public boolean exists(final KeyPrefix prefix,final String key) {
+	
+	public boolean exists(final KeyPrefix prefix,final String key, final boolean releaseNow) {
 		JedisCommands jc = null;
 		String realKey = prefix.getPrefix() + key;
 		try {
 			jc = getJedisCommands();
 			return jc.exists(realKey);
 		}finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
+	public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist, final boolean releaseNow) {
 		if(req == null){
 			return false;
 		}
@@ -107,11 +79,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
+	public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
 		if(clazz == null){
 			return null;
 		}
@@ -128,11 +100,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return null;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz) {
+	public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
 		if(clazz == null){
 			return null;
 		}
@@ -149,11 +121,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return null;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public boolean delete(final KeyPrefix prefix) {
+	public boolean delete(final KeyPrefix prefix, final boolean releaseNow) {
 		if(prefix == null) {
 			return false;
 		}
@@ -175,11 +147,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public boolean delete(final KeyPrefix prefix, final String key) {
+	public boolean delete(final KeyPrefix prefix, final String key,final boolean releaseNow) {
 		String realKey = prefix.getPrefix() + key;
 		JedisCommands jc = null;
 		try {
@@ -190,11 +162,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public boolean deleteAll() {
+	public boolean deleteAll(final boolean releaseNow) {
 		JedisCommands jc = null;
 		try {
 			jc = getJedisCommands();
@@ -208,20 +180,20 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public boolean delete(final PrefixAndKey pk) {
+	public boolean delete(final PrefixAndKey pk, final boolean releaseNow) {
 		if(pk == null) {
 			return false;
 		}
 		KeyPrefix prefix = pk.getPrefix();
 		String key = pk.getKey();
-		return delete(prefix, key);
+		return delete(prefix, key, releaseNow);
 	}
 	
-	public boolean delete(final List<PrefixAndKey> pks) {
+	public boolean delete(final List<PrefixAndKey> pks, final boolean releaseNow) {
 		if(pks == null || pks.size() <= 0) {
 			return false;
 		}
@@ -247,11 +219,11 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		}finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
-	public boolean delete(final KeyPrefix prefix, final List<String> keys) {
+	public boolean delete(final KeyPrefix prefix, final List<String> keys, final boolean releaseNow) {
 		String[] realKeys = new String[keys.size()];
 		int i=0;
 		for(String key : keys) {
@@ -273,7 +245,7 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(releaseNow);
 		}
 	}
 	
@@ -282,7 +254,7 @@ public class JedisClient {
         while (waitTimeout >= 0) {
             long expiresAt = System.currentTimeMillis() + keyPrefix.getExpireSeconds()*1000 + 1;
             String expiresAtStr = String.valueOf(expiresAt); //锁到期时间
-            if (this.set(keyPrefix, key, expiresAtStr, true)) {//设置超时时间，防止客户端崩溃，锁得不到释放
+            if (this.set(keyPrefix, key, expiresAtStr, true, false)) {//设置超时时间，防止客户端崩溃，锁得不到释放
                 // lock acquired
                 return expiresAtStr;
             }
@@ -320,7 +292,7 @@ public class JedisClient {
 			e.printStackTrace();
 			return false;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(true);
 		}
 	}
 	
@@ -357,22 +329,22 @@ public class JedisClient {
 			}while(!cursor.equals("0"));
 			return keys;
 		} finally {
-			closeJedisCommands(jc);
+			closeJedisCommands(false);
 		}
 	}
 	
 	private JedisCommands getJedisCommands() {
-		if(jc != null) {
-			return jc;
-		}else if(js != null){
-			return js.getResource();
+		JedisCommands jc = JedisCommandsHolder.getJedisCommands();
+		if(jc == null) {
+			jc = jcp.getJedisCommands();
+			JedisCommandsHolder.setJedisCommands(jc);
 		}
-		return jp.getResource();
+		return jc;
 	}
 
-	private void closeJedisCommands(JedisCommands jc) {
-		if(jc instanceof Jedis) {
-			((Jedis)jc).close();
+	private void closeJedisCommands(boolean releaseNow) {
+		if(releaseNow) {
+			jcp.releaseJedisCommands();
 		}
 	}
 	

@@ -26,55 +26,106 @@ public class JedisService {
 	@Autowired
 	JedisClient jedisClient;
 	
+	/**
+	 * 只是在这里释放连接，可以配合AOP或者拦截器使用
+	 * */
+	public void releaseConnection() {
+		jedisClient.releaseConnection();
+	}
+	
 	public boolean exists(final KeyPrefix prefix,final String key) {
-		return jedisClient.exists(prefix, key);
+		return this.exists(prefix, key, false);
+	}
+	
+	public boolean exists(final KeyPrefix prefix,final String key, final boolean releaseNow) {
+		return jedisClient.exists(prefix, key, releaseNow);
 	}
 	
 	public <T> boolean set(final KeyPrefix prefix, final String key, final T req) {
-		return set(prefix, key, req, false);
+		return this.set(prefix, key, req, false, false);
+	}
+	
+	public <T> boolean set(final boolean releaseNow, final KeyPrefix prefix, final String key, final T req) {
+		return this.set(prefix, key, req, false, releaseNow);
 	}
 	
 	public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
-		return jedisClient.set(prefix, key, req, onlyNotExist);
+		return this.set(prefix, key, req, onlyNotExist, false);
+	}
+	
+	public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist, final boolean releaseNow) {
+		return jedisClient.set(prefix, key, req, onlyNotExist, releaseNow);
 	}
 	
 	public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-		return jedisClient.get(prefix, key, clazz);
+		return this.get(prefix, key, clazz, false);
+	}
+	
+	public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+		return jedisClient.get(prefix, key, clazz, releaseNow);
 	}
 	
 	public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-		return jedisClient.getList(prefix, key, clazz);
+		return this.getList(prefix, key, clazz, false);
+	}
+	
+	public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+		return jedisClient.getList(prefix, key, clazz, releaseNow);
 	}
 	
 	public boolean delete(final KeyPrefix prefix) {
-		return jedisClient.delete(prefix);
+		return this.delete(prefix, false);
+	}
+	
+	public boolean delete(final KeyPrefix prefix,  final boolean releaseNow) {
+		return jedisClient.delete(prefix, releaseNow);
 	}
 	
 	public boolean delete(final KeyPrefix prefix, final String key) {
-		return jedisClient.delete(prefix, key);
+		return this.delete(prefix, key, false);
+	}
+	
+	public boolean delete(final KeyPrefix prefix, final String key, final boolean releaseNow ) {
+		return jedisClient.delete(prefix, key, releaseNow);
 	}
 	
 	public boolean delete(final KeyPrefix prefix, final String... keys) {
+		return this.delete(false, prefix, keys);
+	}
+	
+	public boolean delete(final boolean releaseNow, final KeyPrefix prefix, final String... keys) {
 		if(keys == null || keys.length <= 0) {
 			return false;
 		}
-		return jedisClient.delete(prefix, Arrays.asList(keys));
+		return this.delete(prefix, Arrays.asList(keys), releaseNow);
 	}
 	
-	public boolean delete(final KeyPrefix prefix, final List<String> keys) {
-		return jedisClient.delete(prefix, keys);
+	public boolean delete(final KeyPrefix prefix, final List<String> keys, final boolean releaseNow) {
+		return jedisClient.delete(prefix, keys, releaseNow);
 	}
 	
 	public boolean delete(final PrefixAndKey pk) {
-		return jedisClient.delete(pk);
+		return this.delete(pk, false);
+	}
+	
+	public boolean delete(final PrefixAndKey pk, final boolean releaseNow) {
+		return jedisClient.delete(pk, releaseNow);
 	}
 	
 	public boolean delete(final List<PrefixAndKey> pks) {
-		return jedisClient.delete(pks);
+		return this.delete(pks, false);
+	}
+	
+	public boolean delete(final List<PrefixAndKey> pks, final boolean releaseNow) {
+		return jedisClient.delete(pks, releaseNow);
 	}
 	
 	public boolean deleteAll() {
-		return jedisClient.deleteAll();
+		return this.deleteAll(false);
+	}
+	
+	public boolean deleteAll(final boolean releaseNow) {
+		return jedisClient.deleteAll(releaseNow);
 	}
 	
 	public List<String> scanKeys(final KeyPrefix prefix){

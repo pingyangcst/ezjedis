@@ -3,6 +3,7 @@ package com.github.xjs.ezjedis.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,8 +29,13 @@ public class JedisServiceTest {
 	JedisService jedisSevice;
 	
 	@Before
-	public void clean() {
+	public void before() {
 		jedisSevice.deleteAll();
+	}
+	
+	@After
+	public void after() {
+		jedisSevice.releaseConnection();
 	}
 	
 	@Test
