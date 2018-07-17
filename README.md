@@ -19,28 +19,53 @@
 ### Cluster配置
 >redis.hosts=10.110.3.62:6379,10.110.3.62:6479,10.110.3.62:6579
 
-### 读写Key
+### 注入JedisService ###
 
-### 读取key
+```java
+@Autowired
+JedisService jedisSevice;
+```
+
+### 读取key ###
 
 ```java
 public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-  return jedisClient.get(prefix, key, clazz);
+	return this.get(prefix, key, clazz, false);
 }
-	
+
+public <T> T get(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+	return jedisClient.get(prefix, key, clazz, releaseNow);
+}
+
 public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz) {
-  return jedisClient.getList(prefix, key, clazz);
+	return this.getList(prefix, key, clazz, false);
+}
+
+public <T> List<T> getList(final KeyPrefix prefix, final String key, final Class<T> clazz, final boolean releaseNow) {
+	return jedisClient.getList(prefix, key, clazz, releaseNow);
 }
 ```
-### 写入key
+### 写入key ###
 
 ```java
+public <T> boolean set(final KeyPrefix prefix, final String key, final T req) {
+	return this.set(prefix, key, req, false, false);
+}
+
+public <T> boolean set(final boolean releaseNow, final KeyPrefix prefix, final String key, final T req) {
+	return this.set(prefix, key, req, false, releaseNow);
+}
+
 public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist) {
-  return jedisClient.set(prefix, key, req, onlyNotExist);
+	return this.set(prefix, key, req, onlyNotExist, false);
+}
+
+public <T> boolean set(final KeyPrefix prefix, final String key, final T req, final boolean onlyNotExist, final boolean releaseNow) {
+	return jedisClient.set(prefix, key, req, onlyNotExist, releaseNow);
 }
 ```
 
-### 删除Key
+### 删除Key ###
 ```java
 public boolean delete(final KeyPrefix prefix) {
   return jedisClient.delete(prefix);
@@ -74,7 +99,7 @@ public boolean deleteAll() {
 }
 ```
 
-### 分布式锁
+### 分布式锁 ###
 ```java
 public String lock(final KeyPrefix prefix,final String key, final int waitSeconds) {
   return jedisClient.lock(prefix, key, waitSeconds);
@@ -83,3 +108,12 @@ public boolean unLock(final KeyPrefix prefix,final String key, final String oldV
   return jedisClient.unLock(prefix, key, oldValue);
 }
 ```
+
+--------------------
+
+### 连接释放管理 ###
+	1、可以在Controller执行期间使用同一个连接
+	2、可以在自己的项目中添加EzjedisInterceptor这个拦截器，用于在Controller方法执行末尾释放redis连接。
+	3、可以在Controller的任意地方手动结束掉连接，只需要调用JedisService.releaseConnection()即可。
+	4、可以调用带有releaseNow参数的方法，方法结束后会关闭掉连接
+----------------
