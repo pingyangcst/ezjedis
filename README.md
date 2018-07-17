@@ -21,12 +21,20 @@
 
 ### 启用EzJedis ###
 ```java
+//在springboot中
 @EnableEzJedis
 @SpringBootApplication
 public class MainApplication {
 	    public static void main(String[] args) throws Exception {
 	       	SpringApplication.run(MainApplication.class, args);
 	    }
+}
+```
+```java
+//在普通的spring mvc中
+@EnableEzJedis
+@Configuration
+public class EzJedisConfig {
 }
 ```
 
