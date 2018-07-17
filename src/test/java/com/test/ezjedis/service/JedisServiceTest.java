@@ -1,4 +1,4 @@
-package com.github.xjs.ezjedis.service;
+package com.test.ezjedis.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.github.xjs.ezjedis.MainApplication;
-import com.github.xjs.ezjedis.bean.User;
-import com.github.xjs.ezjedis.key.UserKey;
+import com.github.xjs.ezjedis.service.JedisService;
+import com.test.ezjedis.MainApplication;
+import com.test.ezjedis.bean.User;
+import com.test.ezjedis.key.UserKey;
 
 /**
  * @author 605162215@qq.com

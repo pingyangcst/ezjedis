@@ -1,4 +1,4 @@
-package com.github.xjs.ezjedis.bean;
+package com.test.ezjedis.bean;
 
 /**
  * @author 605162215@qq.com

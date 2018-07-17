@@ -1,4 +1,4 @@
-package com.github.xjs.ezjedis;
+package com.test.ezjedis;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

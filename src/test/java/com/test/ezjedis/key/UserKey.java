@@ -1,7 +1,9 @@
 /**
  * 
  */
-package com.github.xjs.ezjedis.key;
+package com.test.ezjedis.key;
+
+import com.github.xjs.ezjedis.key.AbstractKey;
 
 /**
  * @author 605162215@qq.com
