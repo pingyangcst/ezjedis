@@ -1,16 +1,17 @@
-/**
- * 
- */
-package com.github.xjs.ezjedis.service;
+package com.github.xjs.ezjedis.config;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import com.github.xjs.ezjedis.service.JedisClient;
 
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
@@ -21,39 +22,34 @@ import redis.clients.jedis.JedisSentinelPool;
 /**
  * @author 605162215@qq.com
  *
- * @date 2017年9月11日 上午11:15:00
+ * @date 2018年7月17日 上午9:06:11<br/>
  */
 @Configuration
-public class JedisConfig {
+@ComponentScan(basePackages = 
+{ 
+"com.github.xjs.ezjedis.config", 
+"com.github.xjs.ezjedis.interceptor",
+"com.github.xjs.ezjedis.service" })
+//@ConditionalOnClass(Jedis.class)
+public class EzJedisAutoConfiguration {
 	
-	private static final Logger log = LoggerFactory.getLogger(JedisConfig.class);
+	private static final Logger log = LoggerFactory.getLogger(EzJedisAutoConfiguration.class);
 	
-	@Value("${redis.hosts}")
-	private String hosts;
-	
-	@Value("${redis.timeout}")
-	private int timeout;
-	
-	@Value("${redis.password}")
-	private String password;
-	
-	@Value("${redis.poolMaxTotal}")
-	private int poolMaxTotal;
-	
-	@Value("${redis.poolMaxIdle}")
-	private int poolMaxIdle;
-	
-	@Value("${redis.poolMaxWait}")
-	private int poolMaxWait;
-	
-	@Value("${redis.replication}")
-	private boolean replication;
-	
-	@Value("${redis.masterName}")
-	private String masterName;
+	@Autowired
+	Environment env ;
 	
 	@Bean
+	//@ConditionalOnMissingBean
 	public JedisClient JedisClientFactory() {
+		EzJedisProperties properties = buildProperties(env);
+		String hosts = properties.getHosts();
+		int timeout = properties.getTimeout();
+		String password =  properties.getPassword();
+		int poolMaxTotal = properties.getPoolMaxTotal();
+		int poolMaxIdle = properties.getPoolMaxIdle();
+		int poolMaxWait = properties.getPoolMaxWait();
+		boolean replication = properties.isReplication();
+		String masterName = properties.getMasterName();
 		String hostPorts[] = hosts.split(",");
 		if(replication) {
 			log.info("JedisSentinelPool创建！hosts:"+hosts+",poolMaxTotal:"+poolMaxTotal+",poolMaxIdle:"+poolMaxIdle+",poolMaxWait:"+poolMaxWait+",timeout:"+timeout+",password:"+password);
@@ -93,63 +89,17 @@ public class JedisConfig {
 			}
 		}
 	}
-	
-	public String getHosts() {
-		return hosts;
-	}
-	public void setHosts(String hosts) {
-		this.hosts = hosts;
-	}
-	public int getPoolMaxIdle() {
-		return poolMaxIdle;
-	}
-	public void setPoolMaxIdle(int poolMaxIdle) {
-		this.poolMaxIdle = poolMaxIdle;
-	}
-	public int getPoolMaxWait() {
-		return poolMaxWait;
-	}
-	public void setPoolMaxWait(int poolMaxWait) {
-		this.poolMaxWait = poolMaxWait;
-	}
 
-	public int getPoolMaxTotal() {
-		return poolMaxTotal;
-	}
-
-	public void setPoolMaxTotal(int poolMaxTotal) {
-		this.poolMaxTotal = poolMaxTotal;
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public boolean isReplication() {
-		return replication;
-	}
-
-	public void setReplication(boolean replication) {
-		this.replication = replication;
-	}
-
-	public String getMasterName() {
-		return masterName;
-	}
-
-	public void setMasterName(String masterName) {
-		this.masterName = masterName;
+	private EzJedisProperties buildProperties(Environment env) {
+		EzJedisProperties properties = new EzJedisProperties();
+		properties.setHosts(env.getProperty("redis.hosts"));
+		properties.setMasterName(env.getProperty("redis.masterName"));
+		properties.setPassword(env.getProperty("redis.password"));
+		properties.setPoolMaxIdle(env.getProperty("redis.poolMaxIdle", int.class,0));
+		properties.setPoolMaxTotal(env.getProperty("redis.poolMaxTotal",int.class,0));
+		properties.setPoolMaxWait(env.getProperty("redis.poolMaxWait", int.class,0));
+		properties.setReplication(env.getProperty("redis.replication",boolean.class, false));
+		properties.setTimeout(env.getProperty("redis.timeout", int.class, 3000));
+		return properties;
 	}
 }
