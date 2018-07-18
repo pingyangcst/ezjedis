@@ -16,6 +16,8 @@
 
 >redis.replication=true
 
+>redis.masterName=masterName
+
 ### Cluster配置
 >redis.hosts=10.110.3.62:6379,10.110.3.62:6479,10.110.3.62:6579
 
