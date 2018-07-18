@@ -1,26 +1,38 @@
 package com.github.xjs.ezjedis.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 /**
  * @author 605162215@qq.com
  *
  * @date 2018年7月17日 上午9:00:26<br/>
  */
+@Component
 public class EzJedisProperties {
 	
+	@Value("${redis.hosts}")
 	private String hosts;
 	
+	@Value("${redis.timeout:3000}")
 	private int timeout;
 	
+	@Value("${redis.password:}")
 	private String password;
 	
+	@Value("${redis.poolMaxTotal:0}")
 	private int poolMaxTotal;
 	
+	@Value("${redis.poolMaxIdle:0}")
 	private int poolMaxIdle;
 	
+	@Value("${redis.poolMaxWait:0}")
 	private int poolMaxWait;
 	
+	@Value("${redis.replication:false}")
 	private boolean replication;
 	
+	@Value("${redis.masterName:}")
 	private String masterName;
 
 	public String getHosts() {

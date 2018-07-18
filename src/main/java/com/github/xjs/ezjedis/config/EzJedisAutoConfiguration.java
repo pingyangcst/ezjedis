@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 import com.github.xjs.ezjedis.service.JedisClient;
 
@@ -36,15 +36,17 @@ public class EzJedisAutoConfiguration {
 	private static final Logger log = LoggerFactory.getLogger(EzJedisAutoConfiguration.class);
 	
 	@Autowired
-	Environment env ;
+	EzJedisProperties properties;
 	
 	@Bean
 	//@ConditionalOnMissingBean
 	public JedisClient JedisClientFactory() {
-		EzJedisProperties properties = buildProperties(env);
 		String hosts = properties.getHosts();
 		int timeout = properties.getTimeout();
 		String password =  properties.getPassword();
+		if(StringUtils.isEmpty(password)) {
+			properties.setPassword(null);
+		}
 		int poolMaxTotal = properties.getPoolMaxTotal();
 		int poolMaxIdle = properties.getPoolMaxIdle();
 		int poolMaxWait = properties.getPoolMaxWait();
@@ -53,6 +55,9 @@ public class EzJedisAutoConfiguration {
 		String hostPorts[] = hosts.split(",");
 		if(replication) {
 			log.info("JedisSentinelPool创建！hosts:"+hosts+",poolMaxTotal:"+poolMaxTotal+",poolMaxIdle:"+poolMaxIdle+",poolMaxWait:"+poolMaxWait+",timeout:"+timeout+",password:"+password);
+			if(StringUtils.isEmpty(masterName)) {
+				throw new RuntimeException("Sentinel模式必须配置masterName");
+			}
 			JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
 			jedisPoolConfig.setMaxIdle(poolMaxIdle);
 			jedisPoolConfig.setMaxTotal(poolMaxTotal);
@@ -88,18 +93,5 @@ public class EzJedisAutoConfiguration {
 				return new JedisClient(null, null, jedisCluster);
 			}
 		}
-	}
-
-	private EzJedisProperties buildProperties(Environment env) {
-		EzJedisProperties properties = new EzJedisProperties();
-		properties.setHosts(env.getProperty("redis.hosts"));
-		properties.setMasterName(env.getProperty("redis.masterName"));
-		properties.setPassword(env.getProperty("redis.password"));
-		properties.setPoolMaxIdle(env.getProperty("redis.poolMaxIdle", int.class,0));
-		properties.setPoolMaxTotal(env.getProperty("redis.poolMaxTotal",int.class,0));
-		properties.setPoolMaxWait(env.getProperty("redis.poolMaxWait", int.class,0));
-		properties.setReplication(env.getProperty("redis.replication",boolean.class, false));
-		properties.setTimeout(env.getProperty("redis.timeout", int.class, 3000));
-		return properties;
 	}
 }
