@@ -29,11 +29,8 @@ public class EzJedisProperties {
 	@Value("${redis.poolMaxWait:0}")
 	private int poolMaxWait;
 	
-	@Value("${redis.replication:false}")
-	private boolean replication;
-	
-	@Value("${redis.masterName:}")
-	private String masterName;
+	@Value("${redis.sentinelMasterName:}")
+	private String sentinelMasterName;
 
 	public String getHosts() {
 		return hosts;
@@ -83,19 +80,11 @@ public class EzJedisProperties {
 		this.poolMaxWait = poolMaxWait;
 	}
 
-	public boolean isReplication() {
-		return replication;
+	public String getSentinelMasterName() {
+		return sentinelMasterName;
 	}
 
-	public void setReplication(boolean replication) {
-		this.replication = replication;
-	}
-
-	public String getMasterName() {
-		return masterName;
-	}
-
-	public void setMasterName(String masterName) {
-		this.masterName = masterName;
+	public void setSentinelMasterName(String sentinelMasterName) {
+		this.sentinelMasterName = sentinelMasterName;
 	}
 }

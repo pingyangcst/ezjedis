@@ -50,14 +50,10 @@ public class EzJedisAutoConfiguration {
 		int poolMaxTotal = properties.getPoolMaxTotal();
 		int poolMaxIdle = properties.getPoolMaxIdle();
 		int poolMaxWait = properties.getPoolMaxWait();
-		boolean replication = properties.isReplication();
-		String masterName = properties.getMasterName();
+		String sentinelMasterName = properties.getSentinelMasterName();
 		String hostPorts[] = hosts.split(",");
-		if(replication) {
+		if(!StringUtils.isEmpty(sentinelMasterName)) {//sentinel
 			log.info("JedisSentinelPool创建！hosts:"+hosts+",poolMaxTotal:"+poolMaxTotal+",poolMaxIdle:"+poolMaxIdle+",poolMaxWait:"+poolMaxWait+",timeout:"+timeout+",password:"+password);
-			if(StringUtils.isEmpty(masterName)) {
-				throw new RuntimeException("Sentinel模式必须配置masterName");
-			}
 			JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
 			jedisPoolConfig.setMaxIdle(poolMaxIdle);
 			jedisPoolConfig.setMaxTotal(poolMaxTotal);
@@ -66,7 +62,7 @@ public class EzJedisAutoConfiguration {
 			for(String hostPort : hostPorts) {
 				sentinels.add(hostPort); // 此处放置ip及端口为 sentinel,如果有多个sentinel 则逐一add即可
 			}
-			JedisSentinelPool jedisPool = new JedisSentinelPool(masterName, sentinels, jedisPoolConfig, timeout, password, 0);
+			JedisSentinelPool jedisPool = new JedisSentinelPool(sentinelMasterName, sentinels, jedisPoolConfig, timeout, password, 0);
 			return new JedisClient(null, jedisPool, null);
 		}else {
 			if(hostPorts.length <= 1) {//standalone
