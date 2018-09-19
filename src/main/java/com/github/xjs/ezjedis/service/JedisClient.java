@@ -6,6 +6,9 @@ package com.github.xjs.ezjedis.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import com.alibaba.fastjson.JSON;
 import com.github.xjs.ezjedis.key.KeyPrefix;
@@ -308,29 +311,60 @@ public class JedisClient {
 		JedisCommands jc = null;
 		try {
 			jc = getJedisCommands();
-			List<String> keys = new ArrayList<String>();
-			String cursor = "0";
-			ScanParams sp = new ScanParams();
-			sp.match("*"+key+"*");
-			sp.count(100);
-			do{
-				ScanResult<String> ret = null;
-				if(jc instanceof Jedis) {
-					ret = ((Jedis)jc).scan(cursor, sp);
-				}else {
-					ret = ((JedisCluster)jc).scan(cursor, sp);
-				}
-				List<String> result = ret.getResult();
-				if(result!=null && result.size() > 0){
-					keys.addAll(result);
-				}
-				//再处理cursor
-				cursor = ret.getStringCursor();
-			}while(!cursor.equals("0"));
-			return keys;
+			if(jc instanceof JedisCluster) {
+				return scanKeyOnCluster(key, (JedisCluster)jc);
+			}else {
+				return scanKeyOnOneNode(key, (Jedis)jc);
+			}
 		} finally {
 			closeJedisCommands(false);
 		}
+	}
+	
+	private List<String> scanKeyOnCluster(String key, JedisCluster jc) {
+		Map<String, JedisPool> jedisClusterNodes = jc.getClusterNodes();
+		if(jedisClusterNodes == null || jedisClusterNodes.size() <= 0) {
+			return null;
+		}
+		CopyOnWriteArrayList<String> results = new CopyOnWriteArrayList<String>();
+		CountDownLatch latch = new CountDownLatch(jedisClusterNodes.size());
+		for(Map.Entry<String, JedisPool> entry : jedisClusterNodes.entrySet()) {
+			final JedisPool jp = entry.getValue();
+			final Jedis jedis = jp.getResource();
+			new Thread(new Runnable() {
+				public void run() {
+					List<String> parts = scanKeyOnOneNode(key,jedis);
+					results.addAll(parts);
+					jedis.close();
+					latch.countDown();
+				}
+			}).start();
+		}
+		try{
+			latch.await();
+			return results;
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	private List<String> scanKeyOnOneNode(String key, Jedis jc) {
+		List<String> keys = new ArrayList<String>();
+		String cursor = "0";
+		ScanParams sp = new ScanParams();
+		sp.match("*"+key+"*");
+		sp.count(100);
+		do{
+			ScanResult<String> ret = jc.scan(cursor, sp);
+			List<String> result = ret.getResult();
+			if(result!=null && result.size() > 0){
+				keys.addAll(result);
+			}
+			//再处理cursor
+			cursor = ret.getStringCursor();
+		}while(!cursor.equals("0"));
+		return keys;
 	}
 	
 	private JedisCommands getJedisCommands() {
