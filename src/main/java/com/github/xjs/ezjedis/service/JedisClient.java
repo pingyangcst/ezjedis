@@ -334,7 +334,9 @@ public class JedisClient {
 			new Thread(new Runnable() {
 				public void run() {
 					List<String> parts = scanKeyOnOneNode(key,jedis);
-					results.addAll(parts);
+					if(parts != null && parts.size() > 0) {
+						results.addAll(parts);
+					}
 					jedis.close();
 					latch.countDown();
 				}
